@@ -1,0 +1,30 @@
+{
+  "name": "signcosmostx",
+  "version": "1.0.0",
+  "description": "",
+  "main": "sign-node.js",
+  "dependencies": {
+    "base64-node": "^1.0.0",
+    "bech32": "^1.1.3",
+    "bip39": "^2.5.0",
+    "bn": "git+https://github.com/shineabel/bn.git",
+    "protobufjs": "^6.8.8",
+    "ramda": "^0.26.1",
+    "secp256k1": "^3.5.0",
+    "sha256": "^0.2.0"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/DecentralCardGame/SignCosmosTx.git"
+  },
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/DecentralCardGame/SignCosmosTx/issues"
+  },
+  "homepage": "https://github.com/DecentralCardGame/SignCosmosTx#readme"
+}
