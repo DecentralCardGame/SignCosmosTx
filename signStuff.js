@@ -1,10 +1,7 @@
-const fs = require('fs');
-//const R = require('ramda')
 
 const Bip39 = require('bip39');
-const Base64 = require('base64-node');
-const CosmosKeypair = require('./cosmoskeypair.js');
 const Codec = require('./codec');
+const CosmosKeypair = require('./cosmoskeypair.js');
 
 
 
@@ -14,35 +11,39 @@ let account_number = 0;
 let sequence = 0;
 
 
+let unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cardservice/CreateUser","value":{"NewUser":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","Creator":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","Alias":"alice"}}],"fee":{"amount":null,"gas":"200000"},"signatures":null,"memo":""}};
+//let unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cardservice/BuyCardScheme","value":{"Bid":{"denom":"credits","amount":"800"},"Buyer":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp"}}],"fee":{"amount":[{"denom":"credits","amount":"1"}],"gas":"50544"},"signatures":null,"memo":""}};
+//let unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cosmos-sdk/MsgSend","value":{"from_address":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","to_address":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","amount":[{"denom":"credits","amount":"1"}]}}],"fee":{"amount":[{"denom":"credits","amount":"1"}],"gas":"200000"},"signatures":null,"memo":""}}
 
 
-    function recover(secret, language) {
-        let keyPair = CosmosKeypair.recover(secret,Bip39.wordlists.english);
-        if (keyPair) {
-            return encode({
-                address: keyPair.address,
-                phrase: secret,
-                privateKey: keyPair.privateKey,
-                publicKey: keyPair.publicKey
-            });
-        }
+
+function recover(secret, language) {
+    let keyPair = CosmosKeypair.recover(secret,Bip39.wordlists.english);
+    if (keyPair) {
+        return encode({
+            address: keyPair.address,
+            phrase: secret,
+            privateKey: keyPair.privateKey,
+            publicKey: keyPair.publicKey
+        });
     }
+}
 
-    function encode(acc){
-        /*if(!Utils.isEmpty(acc)){
-            switch (Config.cosmos.defaultCoding){
-                case Config.cosmos.coding.bech32:{
-                    if (Codec.Hex.isHex(acc.address)){
-                        acc.address =  Codec.Bech32.toBech32(Config.cosmos.bech32.accAddr, acc.address);
-                    }
-                    if (Codec.Hex.isHex(acc.publicKey)){
-                        acc.publicKey = Codec.Bech32.toBech32(Config.cosmos.bech32.accPub, acc.publicKey);
-                    }
+function encode(acc){
+    /*if(!Utils.isEmpty(acc)){
+        switch (Config.cosmos.defaultCoding){
+            case Config.cosmos.coding.bech32:{
+                if (Codec.Hex.isHex(acc.address)){
+                    acc.address =  Codec.Bech32.toBech32(Config.cosmos.bech32.accAddr, acc.address);
                 }
-            }*/
-            return acc
-        //}
-    }
+                if (Codec.Hex.isHex(acc.publicKey)){
+                    acc.publicKey = Codec.Bech32.toBech32(Config.cosmos.bech32.accPub, acc.publicKey);
+                }
+            }
+        }*/
+        return acc
+    //}
+}
 
 let account = recover(mnemonic,'english');
 let keypair = CosmosKeypair.import(account.privateKey);
@@ -235,9 +236,6 @@ function GetTxSignJSON(chain_id, account_number, sequence, msgs, memo, fee) {
 }
 
 
-unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cardservice/BuyCardScheme","value":{"Bid":{"denom":"credits","amount":"800"},"Buyer":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp"}}],"fee":{"amount":[{"denom":"credits","amount":"1"}],"gas":"50544"},"signatures":null,"memo":""}};
-//unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cosmos-sdk/MsgSend","value":{"from_address":"cosmos1n84hwcnmtl20dng2reruvwwdnv3nk5258qyjmn","to_address":"cosmos1n84hwcnmtl20dng2reruvwwdnv3nk5258qyjmn","amount":[{"denom":"credits","amount":"1"}]}}],"fee":{"amount":[{"denom":"credits","amount":"1"}],"gas":"200000"},"signatures":null,"memo":""}}
-
 
 function signTx(unsigned, chainId, account_number, sequence) {
   signStuff = GetTxSignJSON(chainId, account_number, sequence, unsigned.value.msg, unsigned.value.memo, unsigned.value.fee)
@@ -245,15 +243,13 @@ function signTx(unsigned, chainId, account_number, sequence) {
   signStuff.msgs = [signStuff.msgs[0].value]      // FOR MSGSEND THIS IS TO BE REMOVED; GOD KNOWS WHY
 
 
-  console.log("msg bytes: ", Array.from(Buffer.from(JSON.stringify(signStuff.msgs))))
-
   let signature = sign(signStuff, account.privateKey);
   let signatures = {
       pub_key: {
         type: 'tendermint/PubKeySecp256k1',
-        value: Base64.encode(signature.pub_key)
+        value: Buffer.from(signature.pub_key).toString('base64')
        },
-      signature: Base64.encode(signature.signature)
+      signature: Buffer.from(signature.signature).toString('base64')
   }
 
   console.log("stdTx: ", JSON.stringify(signStuff))
