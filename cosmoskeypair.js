@@ -35,9 +35,9 @@ class CosmosKeypair {
     static sign(private_key, msg) {
         //将签名字符串使用Sha256构造32位byte数组
         let sigByte = Buffer.from(JSON.stringify(msg));
-        console.log("msg: ", msg)
-        console.log("sigByte: ", JSON.stringify(sigByte).replace(/,/g , " "))
         let sig32 = Buffer.from(Sha256(sigByte,{ asBytes: true }));
+
+        //console.log("sigByte: ", JSON.stringify(sigByte).replace(/,/g , " "))     // IT MAKES SENSE TO SHOW THIS LOG IF SIGNATURE IS WRONG
 
         //对数据签名
         let prikeyArr = Buffer.from(new Uint8Array(Codec.Hex.hexToBytes(private_key)));
