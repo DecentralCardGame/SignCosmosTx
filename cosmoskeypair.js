@@ -35,6 +35,8 @@ class CosmosKeypair {
     static sign(private_key, msg) {
         //将签名字符串使用Sha256构造32位byte数组
         let sigByte = Buffer.from(JSON.stringify(msg));
+        console.log("msg: ", msg)
+        console.log("sigByte: ", JSON.stringify(sigByte).replace(/,/g , " "))
         let sig32 = Buffer.from(Sha256(sigByte,{ asBytes: true }));
 
         //对数据签名

@@ -11,9 +11,8 @@ let account_number = 0;
 let sequence = 0;
 
 
-let unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cardservice/CreateUser","value":{"NewUser":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","Creator":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","Alias":"alice"}}],"fee":{"amount":null,"gas":"200000"},"signatures":null,"memo":""}};
 //let unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cardservice/BuyCardScheme","value":{"Bid":{"denom":"credits","amount":"800"},"Buyer":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp"}}],"fee":{"amount":[{"denom":"credits","amount":"1"}],"gas":"50544"},"signatures":null,"memo":""}};
-//let unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cosmos-sdk/MsgSend","value":{"from_address":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","to_address":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","amount":[{"denom":"credits","amount":"1"}]}}],"fee":{"amount":[{"denom":"credits","amount":"1"}],"gas":"200000"},"signatures":null,"memo":""}}
+let unsignedTx = {"type":"auth/StdTx","value":{"msg":[{"type":"cosmos-sdk/MsgSend","value":{"from_address":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","to_address":"cosmos1r9myatnpkxkr4ylynn98r0y75pd3rjzr20zdtp","amount":[{"denom":"credits","amount":"1"}]}}],"fee":{"amount":[{"denom":"credits","amount":"1"}],"gas":"200000"},"signatures":null,"memo":""}}
 
 
 
@@ -48,7 +47,7 @@ function encode(acc){
 let account = recover(mnemonic,'english');
 let keypair = CosmosKeypair.import(account.privateKey);
 
-console.log("privkey: ", account.privateKey)
+//console.log("privkey: ", account.privateKey)
 //console.log("public hex: ", keypair.publicKey)
 //console.log("private hex: ", keypair.privateKey)
 
@@ -65,7 +64,7 @@ function sign(data, privateKey) {
         data = JSON.parse(data);
     }
 
-    console.log("data: ", JSON.stringify(data))
+    //console.log("data: ", JSON.stringify(data))
 
     let signbyte = CosmosKeypair.sign(privateKey, data);
     let keypair = CosmosKeypair.import(privateKey);
@@ -100,9 +99,11 @@ MsgGetSignBytes = function (msgs) {
 }
 
 FeeGetSignBytes = function (fee){
-    //if (isEmpty(fee.amount)) {
-    //    fee.amount = [{amount:"1",denom:"credits"}]
-    //}
+    console.log("fee: ", fee)
+
+    if (isEmpty(fee.amount)) {
+        fee.amount = []
+    }
     return {
         amount: fee.amount,
         gas: fee.gas
@@ -221,18 +222,37 @@ function sortObjectKeys(obj) {
 
 
 function GetTxSignJSON(chain_id, account_number, sequence, msgs, memo, fee) {
-    msgs = MsgGetSignBytes(msgs);
+  msgs = MsgGetSignBytes(msgs);
 
-    let tx = {
-        account_number: account_number,
-        chain_id: chain_id,
-        fee: fee, //FeeGetSignBytes(fee), // TODO check
-        memo: memo,
-        msgs: msgs,
-        sequence: sequence
-    };
+  let tx = {
+      account_number: account_number,
+      chain_id: chain_id,
+      fee: FeeGetSignBytes(fee), // TODO check
+      memo: memo,
+      msgs: msgs,
+      sequence: sequence
+  };
 
-    return sortObjectKeys(tx);
+  tx = sortObjectKeys(tx);
+
+  tx.msgs.forEach(function(msg) {
+    switch(msg.type) {
+      case "cardservice/SaveCardContent":
+        msg.value.CardId = parseInt(msg.value.CardId);
+        break;
+      case "cardservice/DonateToCard":
+        msg.value.CardId = parseInt(msg.value.CardId);
+        break;
+      case "cardservice/TransferCard":
+        msg.value.CardId = parseInt(msg.value.CardId);
+        break;
+      case "cardservice/VoteCard":
+        msg.value.CardId = parseInt(msg.value.CardId);
+        break;
+    }
+  })
+
+  return tx;
 }
 
 
@@ -252,7 +272,7 @@ function signTx(unsigned, chainId, account_number, sequence) {
       signature: Buffer.from(signature.signature).toString('base64')
   }
 
-  console.log("stdTx: ", JSON.stringify(signStuff))
+  //console.log("stdTx: ", JSON.stringify(signStuff))
   console.log("signatures: ", signatures)
 
 
@@ -262,16 +282,6 @@ function signTx(unsigned, chainId, account_number, sequence) {
           signatures: [signatures],
           memo: signStuff.memo
       }
-    /*
-  var coreTx = {
-    msg: MsgGetSignBytes(signStuff.msgs),
-    fee: signStuff.fee,
-    signatures: [signatures],
-    memo: signStuff.memo
-    }
-    */
-
-  //coreTx.msg[0].value = coreTx.msg[0].value[0]
 
   finalTx = {
     type:"auth/StdTx",
@@ -286,3 +296,6 @@ function signTx(unsigned, chainId, account_number, sequence) {
 }
 
 signTx(unsignedTx, chain_id, account_number, sequence)
+
+
+//console.log( Codec.Bech32.toBech32("cosmos", "19764EAE61B1AC3A93E49CCA71BC9EA05B11C843") )
