@@ -34,29 +34,14 @@ function encode(acc){
     //}
 }
 
-//console.log("privkey: ", account.privateKey)
-//console.log("public hex: ", keypair.publicKey)
-//console.log("private hex: ", keypair.privateKey)
 
-
-/**
- * 签名交易数据
- *
- * @param data
- * @param privateKey
- * @returns {}
- */
 function sign(data, privateKey) {
     if (typeof data === "string") {
         data = JSON.parse(data);
     }
 
-    //console.log("data: ", JSON.stringify(data))
-
     let signbyte = CosmosKeypair.sign(privateKey, data);
     let keypair = CosmosKeypair.import(privateKey);
-
-    //console.log("signbyte: ", signbyte)
 
     return {
         pub_key:Codec.Hex.hexToBytes(keypair.publicKey),
@@ -64,16 +49,7 @@ function sign(data, privateKey) {
     }
 }
 
-
-OldMsgGetSignBytes = function (msg) {
-  let sortMsg = sortObjectKeys(msg);
-  return {
-      "type": "cosmos-sdk/MsgSend",
-      "value": sortMsg
-  };
-}
-
-MsgGetSignBytes = function (msgs) {
+function MsgGetSignBytes (msgs) {
   let sortedMsgs = [];
   msgs.forEach(function(msg) {
     let sortMsg = sortObjectKeys(msg.value);
@@ -85,7 +61,7 @@ MsgGetSignBytes = function (msgs) {
   return sortedMsgs;
 }
 
-FeeGetSignBytes = function (fee){
+function FeeGetSignBytes (fee){
     if (isEmpty(fee.amount)) {
         fee.amount = []
     }
@@ -115,66 +91,6 @@ function isEmpty(obj) {
                 return Object.keys(obj).length === 0
             }
         }
-    }
-}
-
-class StdSignMsg {
-    constructor(chainID, accnum, sequence, fee, msg, memo) {
-        this.chain_id = chainID;
-        this.account_number = accnum;
-        this.sequence = sequence;
-        this.fee = fee;
-        this.msgs = [msg];
-        this.memo = memo;
-    }
-
-    OldGetSignBytes() {
-        let msgs = [];
-        this.msgs.forEach(function(msg) {
-            msgs.push(OldMsgGetSignBytes(msg))
-        });
-
-        let tx = {
-            account_number: this.account_number,
-            chain_id: this.chain_id,
-            fee: FeeGetSignBytes(this.fee),
-            memo: this.memo,
-            msgs: msgs,
-            sequence: this.sequence
-        };
-        return sortObjectKeys(tx)
-    }
-
-    GetSignBytes() {
-        let msgs = [];
-        this.msgs.forEach(function(msg) {
-            msgs.push(MsgGetSignBytes(msg))
-        });
-
-        let tx = {
-            account_number: this.account_number,
-            chain_id: this.chain_id,
-            fee: FeeGetSignBytes(this.fee),
-            memo: this.memo,
-            msgs: msgs,
-            sequence: this.sequence
-        };
-        return sortObjectKeys(tx)
-    }
-
-    ValidateBasic() {
-        if (Utils.isEmpty(this.chain_id)) {
-            throw new Error("chain_id is  empty");
-        }
-        if (this.account_number < 0) {
-            throw new Error("account_number is  empty");
-        }
-        if (this.sequence < 0) {
-            throw new Error("sequence is  empty");
-        }
-        this.msgs.forEach(function(msg) {
-            msg.ValidateBasic();
-        });
     }
 }
 
@@ -212,7 +128,7 @@ function GetTxSignJSON(chain_id, account_number, sequence, msgs, memo, fee) {
   let tx = {
       account_number: account_number,
       chain_id: chain_id,
-      fee: FeeGetSignBytes(fee), // TODO check
+      fee: FeeGetSignBytes(fee),
       memo: memo,
       msgs: msgs,
       sequence: sequence
@@ -245,16 +161,32 @@ function GetTxSignJSON(chain_id, account_number, sequence, msgs, memo, fee) {
 }
 
 
-
 function signTx(unsigned, mnemonic, chainId, account_number, sequence) {
+
+    if (isEmpty(chainId)) {
+        throw new Error("chain_id is empty");
+    }
+    if (account_number < 0) {
+        throw new Error("account_number is empty");
+    }
+    if (sequence < 0) {
+        throw new Error("sequence is empty");
+    }
+    if (!mnemonic) {
+        throw new Error("mnemonic is empty");
+    }
+
 
   let account = recover(mnemonic,'english');
   let keypair = CosmosKeypair.import(account.privateKey);
 
+  if (verbose) {
+    console.log("privkey: ", account.privateKey)
+    console.log("public hex: ", keypair.publicKey)
+    console.log("private hex: ", keypair.privateKey)
+  }
 
-  signStuff = GetTxSignJSON(chainId, account_number, sequence, unsigned.value.msg, unsigned.value.memo, unsigned.value.fee)
-
-
+  let signStuff = GetTxSignJSON(chainId, account_number, sequence, unsigned.value.msg, unsigned.value.memo, unsigned.value.fee)
 
   let signature = sign(signStuff, account.privateKey);
   let signatures = {
@@ -265,9 +197,7 @@ function signTx(unsigned, mnemonic, chainId, account_number, sequence) {
       signature: Buffer.from(signature.signature).toString('base64')
   }
 
-  //console.log("stdTx: ", JSON.stringify(signStuff))
   if(verbose) console.log("signatures: ", signatures)
-
 
   var coreTx = {
           msg: MsgGetSignBytes(unsigned.value.msg),
@@ -283,13 +213,7 @@ function signTx(unsigned, mnemonic, chainId, account_number, sequence) {
 
   if(verbose) console.log("finalTx: ", JSON.stringify(finalTx))
 
-  //console.log("key: ", finalTx.value.signatures)
-
-  //fs.writeFileSync('./signedTx.json', JSON.stringify(finalTx), 'utf-8');
-
   return finalTx
 }
-
-//signTx(unsignedTx, chain_id, account_number, sequence);
 
 module.exports.signTx = signTx;
