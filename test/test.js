@@ -2,6 +2,15 @@ const R = require('ramda')
 const sign = require('../signStuff')
 
 var assert = require('assert');
+
+describe('create mnemonic', function() {
+  it('should create a mnemonic of 24 words', function() {
+    let keypair = sign.createKey()
+
+    assert.equal(keypair.secret.split(' ').length, 24);
+  });
+})
+
 describe('sign tx', function() {
 
   let chain_id = "testCardchain";

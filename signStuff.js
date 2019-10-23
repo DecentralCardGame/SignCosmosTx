@@ -1,38 +1,44 @@
-
+const R = require('ramda')
 const Bip39 = require('bip39');
 const Codec = require('./codec');
+const Config = require('./config');
 const CosmosKeypair = require('./cosmoskeypair.js');
+
+module.exports.signTx = signTx;
+module.exports.createKey = createKeypair;
 
 let verbose = false;
 
 
+function createKeypair() {
+  let keypair = CosmosKeypair.create(Bip39.wordlists.english);
+  return encode(keypair);
+}
+
 function recover(secret, language) {
     let keyPair = CosmosKeypair.recover(secret,Bip39.wordlists.english);
     if (keyPair) {
-        return encode({
+        return {
             address: keyPair.address,
             phrase: secret,
             privateKey: keyPair.privateKey,
             publicKey: keyPair.publicKey
-        });
+        };
     }
 }
 
 function encode(acc){
-    /*if(!Utils.isEmpty(acc)){
-        switch (Config.cosmos.defaultCoding){
-            case Config.cosmos.coding.bech32:{
-                if (Codec.Hex.isHex(acc.address)){
-                    acc.address =  Codec.Bech32.toBech32(Config.cosmos.bech32.accAddr, acc.address);
-                }
-                if (Codec.Hex.isHex(acc.publicKey)){
-                    acc.publicKey = Codec.Bech32.toBech32(Config.cosmos.bech32.accPub, acc.publicKey);
-                }
-            }
-        }*/
-        return acc
-    //}
-}
+  if(!isEmpty(acc)){
+      if (Codec.Hex.isHex(acc.address)){
+          acc.address =  Codec.Bech32.toBech32(Config.bech32.accAddr, acc.address);
+      }
+      if (Codec.Hex.isHex(acc.publicKey)){
+          acc.publicKey = Codec.Bech32.toBech32(Config.bech32.accPub, acc.publicKey);
+      }
+    }
+    return acc
+  }
+
 
 
 function sign(data, privateKey) {
@@ -215,5 +221,3 @@ function signTx(unsigned, mnemonic, chainId, account_number, sequence) {
 
   return finalTx
 }
-
-module.exports.signTx = signTx;

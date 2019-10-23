@@ -69,6 +69,29 @@ class CosmosKeypair {
         return !(srcLen == eSet.size)
     }
 
+    static isEmpty(obj) {
+      switch (typeof obj) {
+          case "undefined": {
+              return true
+          }
+          case "string": {
+              return obj.length === 0
+          }
+          case "number": {
+              return obj === 0
+          }
+          case "object": {
+              if (obj == null) {
+                  return true
+              } else if (Array.isArray(obj)) {
+                  return obj.length === 0
+              } else {
+                  return Object.keys(obj).length === 0
+              }
+          }
+      }
+  }
+
     static create(language) {
         //生成24位助记词
         let entropySize = 24 * 11 - 8;
